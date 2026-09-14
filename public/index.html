@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOT Bounties &bull; Decentralized Developer Grants & Escrow</title>
+  <meta name="description" content="Decentralized developer bounties and task escrow on the BOT Chain. Fund issues, submit proof-of-work, and receive trustless native BOT rewards." />
+  
+  <!-- Typography: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  
+  <!-- Ethers.js v6 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+  
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Top Application Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-cluster">
+        <a href="/" class="brand-link">
+          <div class="brand-mark">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div class="brand-meta">
+            <span class="brand-title">BOT Bounties</span>
+            <span class="brand-tag">Protocol v1.0</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="header-actions">
+        <div class="network-badge-pill" id="networkPillContainer" title="Active EVM Network">
+          <div class="status-indicator-dot online" id="networkStatusDot"></div>
+          <span class="network-name" id="networkBadge">BOT Chain Testnet</span>
+          <span class="network-id" id="networkIdBadge">ID: 968</span>
+        </div>
+        <button id="btnSwitchNetwork" class="btn btn-ghost btn-sm" title="Toggle Network">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span id="networkBtnText">Switch Chain</span>
+        </button>
+        <button id="btnOpenCreateBountyModal" class="btn btn-primary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Create Bounty</span>
+        </button>
+        <button id="btnConnectWallet" class="btn btn-wallet btn-sm">
+          <span class="wallet-identicon"></span>
+          <span id="walletBtnText">Connect Wallet</span>
+        </button>
+        <button id="btnOpenContractSettings" class="btn btn-icon-ghost btn-sm" title="Smart Contract Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-layout">
+    <!-- Protocol Header & Statistics Bar -->
+    <section class="overview-section">
+      <div class="overview-header">
+        <div>
+          <h1 class="page-title">Developer Bounties & Tasks</h1>
+          <p class="page-description">
+            Trustless on-chain escrow for BOT Chain ecosystem development, smart contracts, tooling, and bug fixes.
+          </p>
+        </div>
+
+        <div class="contract-chip">
+          <div class="chip-label">Target Contract</div>
+          <div class="chip-content">
+            <span id="contractAddressDisplay" class="font-mono">0x...</span>
+            <button id="btnCopyContractAddress" class="btn-icon" title="Copy Address">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <a id="explorerContractLink" href="https://scan.bohr.life" target="_blank" rel="noopener noreferrer" class="btn-icon" title="View on Block Explorer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Strip -->
+      <div class="stats-strip">
+        <div class="stat-item">
+          <div class="stat-label">Total Escrow Value</div>
+          <div class="stat-value" id="statTotalEscrow">0.00 BOT</div>
+          <div class="stat-sub">Active in contract</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Open Bounties</div>
+          <div class="stat-value" id="statOpenBounties">0</div>
+          <div class="stat-sub">Ready for development</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Under Review</div>
+          <div class="stat-value" id="statReviewBounties">0</div>
+          <div class="stat-sub">Work submitted</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Settled & Paid</div>
+          <div class="stat-value" id="statPaidBounties">0</div>
+          <div class="stat-sub">Completed payouts</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter & Search Controls -->
+    <section class="controls-toolbar">
+      <div class="filter-group">
+        <button class="filter-btn active" data-filter="all">
+          <span>All Bounties</span>
+          <span class="count-pill" id="countFilterAll">0</span>
+        </button>
+        <button class="filter-btn" data-filter="0">
+          <span>Open</span>
+          <span class="count-pill" id="countFilterOpen">0</span>
+        </button>
+        <button class="filter-btn" data-filter="1">
+          <span>In Review</span>
+          <span class="count-pill" id="countFilterReview">0</span>
+        </button>
+        <button class="filter-btn" data-filter="3">
+          <span>Settled</span>
+          <span class="count-pill" id="countFilterPaid">0</span>
+        </button>
+        <button class="filter-btn" data-filter="mine">
+          <span>My Activity</span>
+          <span class="count-pill" id="countFilterMine">0</span>
+        </button>
+      </div>
+
+      <div class="search-and-tools">
+        <div class="search-box">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Search by title, description, or wallet address..." />
+        </div>
+        <button id="btnRefreshBounties" class="btn btn-secondary btn-sm" title="Reload from chain">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Bounty Listing Area -->
+    <section class="bounties-container">
+      <div id="bountiesGrid" class="bounty-list">
+        <!-- Dynamic Bounty Rows / Cards -->
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Connecting to BOT Chain and reading escrow records...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal: Create Bounty -->
+  <div id="modalCreateBounty" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-heading">Create Developer Bounty</h2>
+          <p class="modal-sub">Deposit native BOT into smart contract escrow.</p>
+        </div>
+        <button id="btnCloseCreateModal" class="modal-close">&times;</button>
+      </div>
+
+      <form id="formCreateBounty" class="modal-body">
+        <div class="form-row">
+          <label for="inputBountyTitle">Bounty Title <span class="req">*</span></label>
+          <input type="text" id="inputBountyTitle" placeholder="e.g. Implement BOT Chain Staking Contract & Tests" required />
+        </div>
+
+        <div class="form-row">
+          <label for="inputBountyDesc">Specifications & Deliverables <span class="req">*</span></label>
+          <textarea id="inputBountyDesc" rows="4" placeholder="Detail the technical specifications, acceptance criteria, PR review requirements, and milestones..." required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="label-with-balance">
+            <label for="inputBountyReward">Escrow Reward (BOT) <span class="req">*</span></label>
+            <span class="user-balance-hint">
+              Balance: <strong id="createModalUserBalance" class="font-mono">-- BOT</strong>
+              <button type="button" id="btnMaxReward" class="btn-max-badge" title="Set Max Available Balance">MAX</button>
+            </span>
+          </div>
+          <div class="currency-input-wrap">
+            <input type="number" id="inputBountyReward" step="0.0001" min="0.0001" placeholder="5.0" required />
+            <span class="currency-label">BOT</span>
+          </div>
+          <div id="rewardErrorHint" class="input-error-msg hidden"></div>
+          <span class="form-hint">This native BOT amount is locked immediately in the contract upon submission.</span>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" id="btnCancelCreateBounty" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="btnSubmitCreateBounty" class="btn btn-primary">
+            Lock Escrow & Create Bounty
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Submit Work -->
+  <div id="modalSubmitWork" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-heading">Submit Proof of Work</h2>
+          <p class="modal-sub">Link your pull request or deliverable for creator review.</p>
+        </div>
+        <button id="btnCloseSubmitModal" class="modal-close">&times;</button>
+      </div>
+
+      <form id="formSubmitWork" class="modal-body">
+        <input type="hidden" id="inputSubmitBountyId" />
+
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-k">Bounty ID:</span>
+            <span id="submitModalBountyId" class="font-mono">#1</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-k">Title:</span>
+            <span id="submitModalBountyTitle" class="summary-v">...</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-k">Reward:</span>
+            <span id="submitModalBountyReward" class="summary-reward">0.00 BOT</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="inputSubmissionUrl">Proof of Work URL <span class="req">*</span></label>
+          <input type="url" id="inputSubmissionUrl" placeholder="https://github.com/org/repo/pull/42 or live deploy URL" required />
+          <span class="form-hint">Provide a direct link to the GitHub PR, repository commit, or live testnet application.</span>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" id="btnCancelSubmitWork" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="btnConfirmSubmitWork" class="btn btn-primary">
+            Submit for Review
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Contract Configuration -->
+  <div id="modalContractSettings" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-heading">Contract Configuration</h2>
+          <p class="modal-sub">Update the target BotBounties contract address.</p>
+        </div>
+        <button id="btnCloseSettingsModal" class="modal-close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row">
+          <label for="inputContractAddress">Contract Address (0x...)</label>
+          <input type="text" id="inputContractAddress" class="font-mono" placeholder="0x..." />
+          <span class="form-hint">Specify the deployed BotBounties instance on BOT Testnet or Localhost.</span>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" id="btnResetDefaultContract" class="btn btn-secondary">Reset</button>
+          <button type="button" id="btnSaveContractSettings" class="btn btn-primary">Save Address</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmation Dialog -->
+  <div id="modalConfirmDialog" class="modal-backdrop hidden">
+    <div class="modal-dialog modal-dialog-sm">
+      <div class="modal-head">
+        <div class="confirm-head-cluster">
+          <div id="confirmDialogIcon" class="confirm-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <h2 id="confirmDialogTitle" class="modal-heading">Confirm Action</h2>
+            <p id="confirmDialogSubtitle" class="modal-sub">Please review and confirm this on-chain action.</p>
+          </div>
+        </div>
+        <button id="btnCloseConfirmModal" class="modal-close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p id="confirmDialogMessage" class="confirm-body-text"></p>
+        <div id="confirmDialogBadge" class="confirm-highlight-box hidden"></div>
+
+        <div class="modal-foot">
+          <button type="button" id="btnCancelConfirmAction" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="btnApproveConfirmAction" class="btn btn-primary">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Root -->
+  <div id="toastContainer" class="toast-stack"></div>
+
+  <!-- Page Footer -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-meta">
+        <span class="footer-title">BOT Bounties Protocol</span>
+        <span class="footer-sep">&bull;</span>
+        <span>EVM Chain ID 968</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://rpc.bohr.life" target="_blank" rel="noopener noreferrer">RPC Node</a>
+        <a href="https://scan.bohr.life" target="_blank" rel="noopener noreferrer">Block Explorer</a>
+        <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
