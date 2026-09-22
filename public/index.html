@@ -14,6 +14,11 @@
   <!-- Ethers.js v6 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   
+  <!-- Favicon and Brand Icons -->
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -23,9 +28,7 @@
       <div class="brand-cluster">
         <a href="/" class="brand-link">
           <div class="brand-mark">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
+            <img src="/logo.png" alt="BOT Bounties" width="28" height="28" style="display: block; border-radius: 6px; object-fit: cover;" />
           </div>
           <div class="brand-meta">
             <span class="brand-title">BOT Bounties</span>
@@ -37,12 +40,12 @@
       <div class="header-actions">
         <div class="network-badge-pill" id="networkPillContainer" title="Active EVM Network">
           <div class="status-indicator-dot online" id="networkStatusDot"></div>
-          <span class="network-name" id="networkBadge">BOT Chain Testnet</span>
-          <span class="network-id" id="networkIdBadge">ID: 968</span>
+          <span class="network-name" id="networkBadge">BOT Chain Mainnet</span>
+          <span class="network-id" id="networkIdBadge">ID: 677</span>
         </div>
-        <button id="btnSwitchNetwork" class="btn btn-ghost btn-sm" title="Toggle Network">
+        <button id="btnSwitchNetwork" class="btn btn-warning-glow btn-sm hidden" title="Switch to BOT Chain Mainnet">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span id="networkBtnText">Switch Chain</span>
+          <span id="networkBtnText">Switch to Mainnet</span>
         </button>
         <button id="btnOpenCreateBountyModal" class="btn btn-primary btn-sm">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -312,15 +315,46 @@
   <!-- Page Footer -->
   <footer class="app-footer">
     <div class="footer-inner">
-      <div class="footer-meta">
-        <span class="footer-title">BOT Bounties Protocol</span>
-        <span class="footer-sep">&bull;</span>
-        <span>EVM Chain ID 968</span>
+      <div class="footer-brand-section">
+        <a href="https://botchain.ai" target="_blank" rel="noopener noreferrer" class="footer-botchain-brand" title="Visit BOT Chain Official Website">
+          <div class="footer-logo-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" fill="rgba(56, 189, 248, 0.15)" stroke="url(#footerBotGrad)"></polygon>
+              <line x1="12" y1="22" x2="12" y2="15.5" stroke="url(#footerBotGrad)"></line>
+              <polyline points="22 8.5 12 15.5 2 8.5" stroke="url(#footerBotGrad)"></polyline>
+              <defs>
+                <linearGradient id="footerBotGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#38bdf8" />
+                  <stop offset="1" stop-color="#818cf8" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="footer-brand-text">
+            <span class="footer-brand-name">BOT Chain</span>
+            <span class="footer-brand-tag">Ecosystem</span>
+          </div>
+        </a>
+        <div class="footer-meta">
+          <span class="footer-title">BOT Bounties Protocol</span>
+          <span class="footer-sep">&bull;</span>
+          <span>Trustless Escrow & Developer Grants</span>
+        </div>
       </div>
+
       <div class="footer-links">
-        <a href="https://rpc.bohr.life" target="_blank" rel="noopener noreferrer">RPC Node</a>
-        <a href="https://scan.bohr.life" target="_blank" rel="noopener noreferrer">Block Explorer</a>
-        <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://botchain.ai" target="_blank" rel="noopener noreferrer" class="footer-link-highlight" title="Visit Official BOT Chain Website">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>botchain.ai</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="external-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a href="https://scan.botchain.ai" target="_blank" rel="noopener noreferrer" class="footer-link-highlight" title="Visit BOT Chain Mainnet Explorer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>scan.botchain.ai</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="external-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a href="https://scan.bohr.life" target="_blank" rel="noopener noreferrer" title="BOT Chain Testnet Explorer">Testnet Explorer</a>
+        <a href="https://rpc.bohr.life" target="_blank" rel="noopener noreferrer" title="RPC Endpoint">RPC Node</a>
       </div>
     </div>
   </footer>

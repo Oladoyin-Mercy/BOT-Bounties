@@ -36,8 +36,12 @@ async function main() {
 
   console.log("✅ BotBounties deployed successfully!");
   console.log(`📍 Contract Address: ${contractAddress}`);
+  
+  const explorerBase = Number(network.chainId) === 677 
+    ? "https://scan.botchain.ai" 
+    : "https://scan.bohr.life";
   console.log(
-    `🔍 Explorer URL: https://scan.bohr.life/address/${contractAddress}`
+    `🔍 Explorer URL: ${explorerBase}/address/${contractAddress}`
   );
   console.log("==================================================");
 }

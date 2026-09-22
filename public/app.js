@@ -2,6 +2,18 @@
 // BOT Bounties - Web3 Client Application Logic
 // ==========================================================================
 
+const BOT_MAINNET_CONFIG = {
+  chainId: "0x2A5", // 677
+  chainName: "BOT Chain Mainnet",
+  nativeCurrency: {
+    name: "BOT",
+    symbol: "BOT",
+    decimals: 18,
+  },
+  rpcUrls: ["https://rpc.botchain.ai"],
+  blockExplorerUrls: ["https://scan.botchain.ai"],
+};
+
 const BOT_TESTNET_CONFIG = {
   chainId: "0x3C8", // 968
   chainName: "BOT Chain Testnet",
@@ -25,6 +37,12 @@ const HARDHAT_LOCAL_CONFIG = {
   rpcUrls: ["http://127.0.0.1:8545"],
   blockExplorerUrls: [],
 };
+
+const KNOWN_CONTRACTS = {
+  677: "0x95eaF03B03b4424d5a1746847C51Ac620c261200", // Mainnet
+  968: "0xb61a26604855744CC2bE9002B523ee5971aC7855", // Testnet
+};
+
 
 const BOT_BOUNTIES_ABI = [
   "function createBounty(string title, string description) external payable returns (uint256)",
@@ -57,7 +75,7 @@ const state = {
   userBalance: 0n,
   userBalanceEth: "0.00",
   chainId: null,
-  contractAddress: localStorage.getItem("bot_bounties_contract") || "0x0000000000000000000000000000000000000000",
+  contractAddress: localStorage.getItem("bot_bounties_contract") || "0x95eaF03B03b4424d5a1746847C51Ac620c261200",
   contract: null,
   bounties: [],
   currentFilter: "all",
@@ -143,11 +161,22 @@ const dom = {
 };
 
 // ==========================================================================
-// Explorer Helper
+// Explorer Helpers
 // ==========================================================================
+function getExplorerBaseUrl() {
+  return state.chainId === 677 ? "https://scan.botchain.ai" : "https://scan.bohr.life";
+}
+
 function getExplorerTxUrl(txHash) {
-  if (!txHash) return "https://scan.bohr.life";
-  return `https://scan.bohr.life/tx/${txHash}`;
+  const base = getExplorerBaseUrl();
+  if (!txHash) return base;
+  return `${base}/tx/${txHash}`;
+}
+
+function getExplorerAddressUrl(address) {
+  const base = getExplorerBaseUrl();
+  if (!address) return base;
+  return `${base}/address/${address}`;
 }
 
 // ==========================================================================
@@ -273,9 +302,10 @@ function showConfirmModal({
 // ==========================================================================
 // Web3 & Contract Setup
 // ==========================================================================
+// ==========================================================================
+// Web3 & Contract Setup
+// ==========================================================================
 async function initApp() {
-  updateContractDisplay();
-
   if (window.ethereum) {
     state.provider = new ethers.BrowserProvider(window.ethereum);
 
@@ -289,8 +319,14 @@ async function initApp() {
           const network = await state.provider.getNetwork();
           state.chainId = Number(network.chainId);
 
+          if (KNOWN_CONTRACTS[state.chainId]) {
+            state.contractAddress = KNOWN_CONTRACTS[state.chainId];
+            localStorage.setItem("bot_bounties_contract", state.contractAddress);
+          }
+
           await updateUserBalance();
           setupContract();
+          updateContractDisplay();
           updateWalletUI();
           fetchBounties();
 
@@ -311,18 +347,34 @@ async function initApp() {
         state.provider = new ethers.BrowserProvider(window.ethereum);
         const network = await state.provider.getNetwork();
         state.chainId = Number(network.chainId);
-        if (state.userAddress) {
-          state.signer = await state.provider.getSigner();
-          await updateUserBalance();
+        
+        if (KNOWN_CONTRACTS[state.chainId]) {
+          state.contractAddress = KNOWN_CONTRACTS[state.chainId];
+          localStorage.setItem("bot_bounties_contract", state.contractAddress);
         }
+
+        if (state.userAddress) {
+          try {
+            state.signer = await state.provider.getSigner();
+            await updateUserBalance();
+          } catch (signerErr) {
+            console.warn("Could not get signer after chain switch:", signerErr);
+          }
+        }
+
         setupContract();
+        updateContractDisplay();
         updateWalletUI();
         fetchBounties();
         
-        if (state.chainId === 968) {
+        if (state.chainId === 677) {
+          showToast("Network Connected", "Connected to BOT Chain Mainnet", "success");
+        } else if (state.chainId === 968) {
           showToast("Network Connected", "Connected to BOT Chain Testnet", "success");
+        } else if (state.chainId === 31337) {
+          showToast("Network Connected", "Connected to Localhost EVM", "info");
         } else {
-          showToast("Wrong Network", `Please switch to BOT Chain Testnet (ID: 968)`, "warning");
+          showToast("Unsupported Network", `Connected to Chain ID ${state.chainId}. Please switch to BOT Chain Mainnet.`, "warning");
         }
       } catch (err) {
         console.warn("Chain switch update error:", err);
@@ -330,25 +382,33 @@ async function initApp() {
     });
 
     try {
+      const network = await state.provider.getNetwork();
+      state.chainId = Number(network.chainId);
+
+      if (KNOWN_CONTRACTS[state.chainId]) {
+        state.contractAddress = KNOWN_CONTRACTS[state.chainId];
+        localStorage.setItem("bot_bounties_contract", state.contractAddress);
+      }
+
       const accounts = await state.provider.listAccounts();
       if (accounts.length > 0) {
         state.signer = await state.provider.getSigner();
         state.userAddress = await state.signer.getAddress();
-        const network = await state.provider.getNetwork();
-        state.chainId = Number(network.chainId);
         await updateUserBalance();
-        updateWalletUI();
-      } else {
-        const network = await state.provider.getNetwork();
-        state.chainId = Number(network.chainId);
-        updateWalletUI();
       }
+      updateContractDisplay();
+      updateWalletUI();
     } catch (err) {
-      console.warn("Auto connect skipped:", err);
+      console.warn("Auto connect init skipped:", err);
+      state.chainId = 677;
+      updateContractDisplay();
+      updateWalletUI();
     }
   } else {
-    state.provider = new ethers.JsonRpcProvider("https://rpc.bohr.life");
-    state.chainId = 968;
+    state.provider = new ethers.JsonRpcProvider("https://rpc.botchain.ai");
+    state.chainId = 677;
+    state.contractAddress = KNOWN_CONTRACTS[677];
+    updateContractDisplay();
     updateWalletUI();
   }
 
@@ -398,15 +458,19 @@ function setupContract() {
 
 function updateContractDisplay() {
   const addr = state.contractAddress;
-  dom.inputContractAddress.value = addr;
+  if (dom.inputContractAddress) dom.inputContractAddress.value = addr;
   if (addr && addr !== ethers.ZeroAddress) {
     const formatted = `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
-    dom.contractAddressDisplay.textContent = formatted;
-    dom.contractAddressDisplay.title = addr;
-    dom.explorerContractLink.href = `https://scan.bohr.life/address/${addr}`;
+    if (dom.contractAddressDisplay) {
+      dom.contractAddressDisplay.textContent = formatted;
+      dom.contractAddressDisplay.title = addr;
+    }
+    if (dom.explorerContractLink) {
+      dom.explorerContractLink.href = getExplorerAddressUrl(addr);
+    }
   } else {
-    dom.contractAddressDisplay.textContent = "Not Set";
-    dom.explorerContractLink.href = "#";
+    if (dom.contractAddressDisplay) dom.contractAddressDisplay.textContent = "Not Set";
+    if (dom.explorerContractLink) dom.explorerContractLink.href = "#";
   }
 }
 
@@ -414,51 +478,36 @@ function updateWalletUI() {
   // Update connected address text
   if (state.userAddress) {
     const shortAddr = `${state.userAddress.substring(0, 6)}...${state.userAddress.substring(state.userAddress.length - 4)}`;
-    dom.walletBtnText.textContent = shortAddr;
+    if (dom.walletBtnText) dom.walletBtnText.textContent = shortAddr;
   } else {
-    dom.walletBtnText.textContent = "Connect Wallet";
+    if (dom.walletBtnText) dom.walletBtnText.textContent = "Connect Wallet";
   }
 
-  // Network identification and wrong chain warning states
-  const isBotTestnet = state.chainId === 968;
-  const isLocalhost = state.chainId === 31337;
+  // BOT Chain Mainnet is the production target (Chain ID: 677)
+  const isBotMainnet = state.chainId === 677;
 
   if (dom.networkPillContainer) {
-    if (isBotTestnet) {
+    if (isBotMainnet) {
+      // Connected to Mainnet: Show clean green indicator, hide switch button
       dom.networkPillContainer.className = "network-badge-pill network-valid";
       if (dom.networkStatusDot) dom.networkStatusDot.className = "status-indicator-dot online";
-      if (dom.networkBadge) dom.networkBadge.textContent = "BOT Chain Testnet";
-      if (dom.networkIdBadge) dom.networkIdBadge.textContent = "ID: 968";
+      if (dom.networkBadge) dom.networkBadge.textContent = "BOT Chain Mainnet";
+      if (dom.networkIdBadge) dom.networkIdBadge.textContent = "ID: 677";
       if (dom.btnSwitchNetwork) {
-        dom.btnSwitchNetwork.className = "btn btn-ghost btn-sm";
-        dom.btnSwitchNetwork.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span id="networkBtnText">Switch Chain</span>
-        `;
-      }
-    } else if (isLocalhost) {
-      dom.networkPillContainer.className = "network-badge-pill network-valid";
-      if (dom.networkStatusDot) dom.networkStatusDot.className = "status-indicator-dot local";
-      if (dom.networkBadge) dom.networkBadge.textContent = "Localhost EVM";
-      if (dom.networkIdBadge) dom.networkIdBadge.textContent = "ID: 31337";
-      if (dom.btnSwitchNetwork) {
-        dom.btnSwitchNetwork.className = "btn btn-ghost btn-sm";
-        dom.btnSwitchNetwork.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span id="networkBtnText">Switch Chain</span>
-        `;
+        dom.btnSwitchNetwork.classList.add("hidden");
       }
     } else {
-      // Wrong Network State (Amber/Red warning badge)
+      // Wrong Network State (Amber/Red warning badge + prominent Switch to Mainnet button)
       dom.networkPillContainer.className = "network-badge-pill network-wrong";
       if (dom.networkStatusDot) dom.networkStatusDot.className = "status-indicator-dot wrong";
       if (dom.networkBadge) dom.networkBadge.textContent = state.chainId ? `Wrong Chain (${state.chainId})` : "Wrong Network";
       if (dom.networkIdBadge) dom.networkIdBadge.textContent = "Switch Required";
       if (dom.btnSwitchNetwork) {
+        dom.btnSwitchNetwork.classList.remove("hidden");
         dom.btnSwitchNetwork.className = "btn btn-warning-glow btn-sm";
         dom.btnSwitchNetwork.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span id="networkBtnText">Switch to BOT Testnet</span>
+          <span id="networkBtnText">Switch to BOT Mainnet</span>
         `;
       }
     }
@@ -491,15 +540,21 @@ async function connectWallet() {
     const network = await state.provider.getNetwork();
     state.chainId = Number(network.chainId);
 
+    if (state.chainId === 677) {
+      state.contractAddress = KNOWN_CONTRACTS[677];
+      localStorage.setItem("bot_bounties_contract", state.contractAddress);
+    }
+
     await updateUserBalance();
+    updateContractDisplay();
     updateWalletUI();
     setupContract();
     fetchBounties();
     
-    if (state.chainId !== 968 && state.chainId !== 31337) {
-      showToast("Wrong Network", "Connected to unsupported chain. Please click 'Switch to BOT Testnet'.", "warning");
+    if (state.chainId !== 677) {
+      showToast("Wrong Network", "Connected to unsupported chain. Please click 'Switch to BOT Mainnet'.", "warning");
     } else {
-      showToast("Wallet Connected", `Connected as ${state.userAddress.substring(0, 8)}... (${state.userBalanceEth} BOT)`, "success");
+      showToast("Wallet Connected", `Connected to BOT Chain Mainnet as ${state.userAddress.substring(0, 8)}... (${state.userBalanceEth} BOT)`, "success");
     }
   } catch (err) {
     console.error("Wallet connection failed:", err);
@@ -508,8 +563,13 @@ async function connectWallet() {
 }
 
 async function switchNetwork() {
-  if (!window.ethereum) return;
-  const targetConfig = state.chainId === 968 ? HARDHAT_LOCAL_CONFIG : BOT_TESTNET_CONFIG;
+  if (!window.ethereum) {
+    showToast("Web3 Extension Required", "Please install MetaMask or an EVM wallet.", "error");
+    return;
+  }
+
+  // Always target BOT Chain Mainnet (Chain ID: 677)
+  const targetConfig = BOT_MAINNET_CONFIG;
 
   try {
     await window.ethereum.request({
@@ -517,17 +577,27 @@ async function switchNetwork() {
       params: [{ chainId: targetConfig.chainId }],
     });
   } catch (switchError) {
-    if (switchError.code === 4902 && targetConfig.rpcUrls.length > 0) {
+    const isUnrecognized =
+      switchError.code === 4902 ||
+      switchError.code === -32603 ||
+      (switchError.data && switchError.data.originalError && switchError.data.originalError.code === 4902) ||
+      String(switchError.message || "").toLowerCase().includes("unrecognized") ||
+      String(switchError.message || "").toLowerCase().includes("not added") ||
+      String(switchError.message || "").toLowerCase().includes("could not find");
+
+    if (isUnrecognized && targetConfig.rpcUrls && targetConfig.rpcUrls.length > 0) {
       try {
         await window.ethereum.request({
           method: "wallet_addEthereumChain",
           params: [targetConfig],
         });
       } catch (addError) {
-        showToast("Network Config Error", addError.message, "error");
+        showToast("Network Add Failed", addError.message || "Failed to add network to wallet", "error");
       }
+    } else if (switchError.code === 4001) {
+      showToast("Switch Cancelled", "Network switch was cancelled in wallet.", "info");
     } else {
-      showToast("Switch Failed", switchError.message, "error");
+      showToast("Switch Failed", switchError.message || "Could not switch network in wallet.", "error");
     }
   }
 }
@@ -822,7 +892,7 @@ function renderBounties() {
           <div class="meta-item">
             <span class="meta-avatar" style="background: linear-gradient(135deg, ${creatorColor}, #3b82f6)"></span>
             <span class="meta-label">Creator:</span>
-            <a href="https://scan.bohr.life/address/${bounty.creator}" target="_blank" rel="noopener noreferrer" class="meta-address font-mono">${creatorShort}</a>
+            <a href="${getExplorerAddressUrl(bounty.creator)}" target="_blank" rel="noopener noreferrer" class="meta-address font-mono">${creatorShort}</a>
           </div>
 
           ${
@@ -831,7 +901,7 @@ function renderBounties() {
             <div class="meta-item">
               <span class="meta-avatar hunter-avatar"></span>
               <span class="meta-label">Hunter:</span>
-              <a href="https://scan.bohr.life/address/${bounty.hunter}" target="_blank" rel="noopener noreferrer" class="meta-address font-mono">${hunterShort}</a>
+              <a href="${getExplorerAddressUrl(bounty.hunter)}" target="_blank" rel="noopener noreferrer" class="meta-address font-mono">${hunterShort}</a>
             </div>
           `
               : ""
@@ -885,9 +955,28 @@ function escapeHtml(str) {
   });
 }
 
-// ==========================================================================
+// Helper to ensure transactions meet BOT Chain's 20 gwei minimum gas price requirement and bypass RPC estimateGas timeouts
+async function getTxOverrides(custom = {}) {
+  let requiredGasPrice = ethers.parseUnits("20.5", "gwei");
+  try {
+    if (state.provider) {
+      const feeData = await state.provider.getFeeData();
+      if (feeData.gasPrice && feeData.gasPrice > requiredGasPrice) {
+        requiredGasPrice = feeData.gasPrice;
+      }
+    }
+  } catch (e) {
+    console.warn("Gas fee fallback used:", e);
+  }
+
+  return {
+    gasPrice: requiredGasPrice,
+    gasLimit: custom.gasLimit || 350000n,
+    ...custom,
+  };
+}
+
 // Action Listeners
-// ==========================================================================
 function attachRowListeners() {
   document.querySelectorAll(".btn-open-submit-modal").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -928,7 +1017,8 @@ function attachRowListeners() {
       try {
         showToast("Approving Settlement...", "Please sign the payment release in your wallet.", "info");
         const contractWithSigner = state.contract.connect(state.signer);
-        const tx = await contractWithSigner.approveAndPay(id);
+        const overrides = await getTxOverrides();
+        const tx = await contractWithSigner.approveAndPay(id, overrides);
 
         showToast("Transaction Broadcast", `Settlement transaction is being mined: ${tx.hash.substring(0, 10)}...`, "info", { txHash: tx.hash });
         await tx.wait();
@@ -962,7 +1052,8 @@ function attachRowListeners() {
       try {
         showToast("Cancelling Bounty...", "Please sign the cancellation transaction in your wallet.", "info");
         const contractWithSigner = state.contract.connect(state.signer);
-        const tx = await contractWithSigner.cancelBounty(id);
+        const overrides = await getTxOverrides();
+        const tx = await contractWithSigner.cancelBounty(id, overrides);
 
         showToast("Transaction Broadcast", `Cancellation is being mined: ${tx.hash.substring(0, 10)}...`, "info", { txHash: tx.hash });
         await tx.wait();
@@ -1004,7 +1095,6 @@ dom.formCreateBounty.addEventListener("submit", async (e) => {
     dom.rewardErrorHint.textContent = validation.error;
     dom.rewardErrorHint.classList.remove("hidden");
     showToast("Invalid Reward Input", validation.error, "error");
-    // PREVENT TRIGGERING METAMASK GAS ESTIMATION
     return;
   }
 
@@ -1013,7 +1103,8 @@ dom.formCreateBounty.addEventListener("submit", async (e) => {
     showToast("Initiating Escrow Deposit...", "Please confirm transaction in your wallet.", "info");
 
     const contractWithSigner = state.contract.connect(state.signer);
-    const tx = await contractWithSigner.createBounty(title, desc, { value: depositWei });
+    const overrides = await getTxOverrides({ value: depositWei });
+    const tx = await contractWithSigner.createBounty(title, desc, overrides);
 
     dom.modalCreateBounty.classList.add("hidden");
     dom.formCreateBounty.reset();
@@ -1051,7 +1142,8 @@ dom.formSubmitWork.addEventListener("submit", async (e) => {
   try {
     showToast("Submitting Proof...", "Please confirm transaction in your wallet.", "info");
     const contractWithSigner = state.contract.connect(state.signer);
-    const tx = await contractWithSigner.submitWork(id, url);
+    const overrides = await getTxOverrides();
+    const tx = await contractWithSigner.submitWork(id, url, overrides);
 
     dom.modalSubmitWork.classList.add("hidden");
     dom.formSubmitWork.reset();

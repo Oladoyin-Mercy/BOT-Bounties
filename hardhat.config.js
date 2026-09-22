@@ -37,6 +37,12 @@ module.exports = {
       chainId: 968,
       accounts: accounts,
     },
+    botMainnet: {
+      url: process.env.BOT_MAINNET_RPC_URL || "https://rpc.botchain.ai",
+      chainId: 677,
+      accounts: accounts,
+      timeout: 180000,
+    },
   },
   paths: {
     sources: "./contracts",
