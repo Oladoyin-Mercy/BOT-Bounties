@@ -80,6 +80,10 @@ body {
   font-family: var(--font-mono);
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* ==========================================================================
    Header & Navigation
    ========================================================================== */
@@ -348,6 +352,43 @@ body {
   height: 8px;
   border-radius: 50%;
   background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  flex-shrink: 0;
+}
+
+.connected-account-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.connected-wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(19, 27, 46, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.connected-wallet-pill:hover {
+  border-color: var(--color-brand);
+  background-color: var(--bg-surface-hover);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+.connected-user-addr {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.2px;
 }
 
 .btn-sm {
@@ -1527,40 +1568,209 @@ body {
   transform: translate(1px, -1px);
 }
 
-@media (max-width: 900px) {
+/* ==========================================================================
+   Responsive Design System (Desktop, Tablet, Mobile)
+   ========================================================================== */
+
+@media (max-width: 992px) {
+  .app-layout {
+    padding: 20px 16px 48px;
+  }
+
+  .overview-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .contract-chip {
+    width: 100%;
+  }
+
+  .stats-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-item:nth-child(2) {
+    border-right: none;
+  }
+
+  .stat-item:nth-child(3) {
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .stat-item:nth-child(4) {
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-right: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar-inner {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .brand-title {
+    font-size: 1rem;
+  }
+
+  .brand-tag {
+    display: none;
+  }
+
+  .network-id {
+    display: none;
+  }
+
+  .controls-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filter-group {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filter-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .search-and-tools {
+    width: 100%;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .bounty-card {
+    padding: 18px 16px;
+  }
+
+  .bounty-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .reward-box {
+    width: 100%;
+    align-items: flex-start;
+    padding: 8px 12px;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: var(--radius-sm);
+  }
+
+  .bounty-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .bounty-card-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .bounty-card-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .footer-inner {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
+
   .footer-links {
     width: 100%;
     justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .modal-dialog {
+    max-width: 100%;
+    margin: 10px;
+    padding: 20px 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
+
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
   }
 }
 
-/* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 540px) {
+  .header-actions {
+    gap: 6px;
+  }
+
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  #btnOpenCreateBountyModal .btn-text {
+    display: none;
+  }
+
+  #btnOpenCreateBountyModal {
+    padding: 6px 8px;
+  }
+
+  .network-badge-pill {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+  }
+
+  .connected-wallet-pill {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+  }
+
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  .page-description {
+    font-size: 0.85rem;
+  }
+
   .stats-strip {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
   }
-  .stat-item:nth-child(2) {
-    border-right: none;
+
+  .stat-item {
+    padding: 12px 14px;
   }
-  .bounty-card-header {
-    flex-direction: column;
-    align-items: flex-start;
+
+  .stat-value {
+    font-size: 1.15rem;
   }
-  .reward-box {
-    align-items: flex-start;
-    width: 100%;
-  }
-  .bounty-card-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .bounty-card-actions {
-    width: 100%;
-    justify-content: flex-end;
+
+  .chip-content {
+    flex-wrap: wrap;
+    word-break: break-all;
+    font-size: 0.78rem;
   }
 }

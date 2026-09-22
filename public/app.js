@@ -86,6 +86,11 @@ const state = {
 const dom = {
   btnConnectWallet: document.getElementById("btnConnectWallet"),
   walletBtnText: document.getElementById("walletBtnText"),
+  connectedAccountGroup: document.getElementById("connectedAccountGroup"),
+  connectedWalletPill: document.getElementById("connectedWalletPill"),
+  connectedUserAddr: document.getElementById("connectedUserAddr"),
+  connectedUserBalance: document.getElementById("connectedUserBalance"),
+  btnDisconnectWallet: document.getElementById("btnDisconnectWallet"),
   networkPillContainer: document.getElementById("networkPillContainer"),
   networkStatusDot: document.getElementById("networkStatusDot"),
   networkBadge: document.getElementById("networkBadge"),
@@ -475,12 +480,18 @@ function updateContractDisplay() {
 }
 
 function updateWalletUI() {
-  // Update connected address text
+  // Update connected address text & wallet pill
   if (state.userAddress) {
     const shortAddr = `${state.userAddress.substring(0, 6)}...${state.userAddress.substring(state.userAddress.length - 4)}`;
     if (dom.walletBtnText) dom.walletBtnText.textContent = shortAddr;
+    if (dom.btnConnectWallet) dom.btnConnectWallet.classList.add("hidden");
+    if (dom.connectedAccountGroup) dom.connectedAccountGroup.classList.remove("hidden");
+    if (dom.connectedUserAddr) dom.connectedUserAddr.textContent = shortAddr;
+    if (dom.connectedUserBalance) dom.connectedUserBalance.textContent = `${state.userBalanceEth} BOT`;
   } else {
     if (dom.walletBtnText) dom.walletBtnText.textContent = "Connect Wallet";
+    if (dom.btnConnectWallet) dom.btnConnectWallet.classList.remove("hidden");
+    if (dom.connectedAccountGroup) dom.connectedAccountGroup.classList.add("hidden");
   }
 
   // BOT Chain Mainnet is the production target (Chain ID: 677)
@@ -488,13 +499,14 @@ function updateWalletUI() {
 
   if (dom.networkPillContainer) {
     if (isBotMainnet) {
-      // Connected to Mainnet: Show clean green indicator, hide switch button
+      // Connected to Mainnet: Show clean green indicator, hide switch button completely
       dom.networkPillContainer.className = "network-badge-pill network-valid";
       if (dom.networkStatusDot) dom.networkStatusDot.className = "status-indicator-dot online";
       if (dom.networkBadge) dom.networkBadge.textContent = "BOT Chain Mainnet";
       if (dom.networkIdBadge) dom.networkIdBadge.textContent = "ID: 677";
       if (dom.btnSwitchNetwork) {
         dom.btnSwitchNetwork.classList.add("hidden");
+        dom.btnSwitchNetwork.style.display = "none";
       }
     } else {
       // Wrong Network State (Amber/Red warning badge + prominent Switch to Mainnet button)
@@ -504,6 +516,7 @@ function updateWalletUI() {
       if (dom.networkIdBadge) dom.networkIdBadge.textContent = "Switch Required";
       if (dom.btnSwitchNetwork) {
         dom.btnSwitchNetwork.classList.remove("hidden");
+        dom.btnSwitchNetwork.style.display = "inline-flex";
         dom.btnSwitchNetwork.className = "btn btn-warning-glow btn-sm";
         dom.btnSwitchNetwork.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1162,6 +1175,7 @@ dom.formSubmitWork.addEventListener("submit", async (e) => {
 
 // UI Event Handlers
 dom.btnConnectWallet.addEventListener("click", connectWallet);
+if (dom.btnDisconnectWallet) dom.btnDisconnectWallet.addEventListener("click", disconnectWallet);
 dom.btnSwitchNetwork.addEventListener("click", switchNetwork);
 dom.btnRefreshBounties.addEventListener("click", () => {
   updateUserBalance();
