@@ -6,3 +6,8 @@ coverage/
 coverage.json
 typechain/
 typechain-types/
+Dev*
+dev*
+*.pub
+*.key
+*.pem
